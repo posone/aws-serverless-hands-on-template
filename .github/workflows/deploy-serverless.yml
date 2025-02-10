@@ -1,0 +1,52 @@
+name: Deploy serverless app to AWS
+on:
+  workflow_dispatch:
+  # push:
+  #   branches:
+  #     - main
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCOUNT: '<your_AWS_ACCOUNT>'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set Up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install Dependencies & test
+        run: |
+          pushd /home/runner/work/aws-serverless-hands-on/aws-serverless-hands-on/deploy/cdk
+          npm install -g aws-cdk
+          npm install
+          npm test
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/github-actions-role
+          aws-region: eu-west-1
+
+      - name: Deploy Backend
+        id: backend
+        run: |
+          pushd /home/runner/work/aws-serverless-hands-on/aws-serverless-hands-on/deploy/cdk
+          cdk deploy BackendStack --require-approval never --outputs-file cdk.outputs.json
+          API_URL=$(jq -r '.["BackendStack"]["APIURL"]' cdk.outputs.json)
+          echo "API_URL=$API_URL" >> $GITHUB_OUTPUT
+
+      - name: Deploy Frontend
+        run: |
+          echo ${{ steps.backend.outputs.API_URL }}
+          pushd /home/runner/work/aws-serverless-hands-on/aws-serverless-hands-on/deploy/cdk
+          sed -i 's|PLACEHOLDER|'${{ steps.backend.outputs.API_URL }}'|g' frontend/script.js
+          cdk deploy FrontendStack --require-approval never
