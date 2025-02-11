@@ -1,5 +1,5 @@
 # AWS Serverless hands on project template
-This repository is part of the blog post "AWS Serverless hands on". Please visit this [blog post](https://dev.to). 
+This repository is part of the blog post "AWS Serverless hands on". Please visit this [blog post](https://dev.to/aws-builders/aws-serverless-hands-on-part-12-33d6). 
 In a nutshell with the code located here you should be able to achieve following:
 * create OIDC stack allowing connection between GHA and AWS
 * create serverless application on AWS with separate Backend and Frontend automated by GitHub Actions
